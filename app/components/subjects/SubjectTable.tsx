@@ -140,6 +140,15 @@ const SubjectTable: React.FC<SubjectTableProps> = ({
   
   return (
     <Box>
+      {/* Debug info */}
+      <Box p={2} bg="yellow.100" mb={2} display={subjects.length > 0 ? "none" : "block"}>
+        <Text color="black">Debug - Subjects count: {subjects.length}</Text>
+        {subjects.length > 0 && (
+          <Text color="black">Debug - First subject: {JSON.stringify(subjects[0])}</Text>
+        )}
+      </Box>
+      
+      {/* Search bar and counter */}
       <Flex mb={4} gap={4} flexWrap="wrap" alignItems="center">
         <InputGroup maxW="300px">
           <InputLeftElement pointerEvents="none">
@@ -159,6 +168,7 @@ const SubjectTable: React.FC<SubjectTableProps> = ({
         </Text>
       </Flex>
       
+      {/* Table container */}
       <Box
         border="1px"
         borderColor={borderColor}
@@ -167,6 +177,7 @@ const SubjectTable: React.FC<SubjectTableProps> = ({
         bg={bgColor}
         position="relative"
       >
+        {/* Loading overlay */}
         {isLoading && (
           <Flex
             position="absolute"
@@ -183,6 +194,7 @@ const SubjectTable: React.FC<SubjectTableProps> = ({
           </Flex>
         )}
         
+        {/* Table */}
         <Box
           ref={tableContainerRef}
           overflowY="auto"
@@ -214,11 +226,22 @@ const SubjectTable: React.FC<SubjectTableProps> = ({
             </Thead>
             
             <Tbody>
-              {paddingTop > 0 && (
+              {virtualRows.length === 0 && !isLoading && (
+                <Tr>
+                  <Td colSpan={columns.length} textAlign="center" py={10}>
+                    <Text fontSize="lg" color="gray.500">
+                      No subjects found
+                    </Text>
+                  </Td>
+                </Tr>
+              )}
+              
+              {paddingTop > 0 && virtualRows.length > 0 && (
                 <Tr>
                   <Td colSpan={columns.length} height={`${paddingTop}px`} p={0} />
                 </Tr>
               )}
+              
               {virtualRows.map(virtualRow => {
                 const row = rows[virtualRow.index];
                 return (
@@ -236,18 +259,10 @@ const SubjectTable: React.FC<SubjectTableProps> = ({
                   </Tr>
                 );
               })}
-              {paddingBottom > 0 && (
+              
+              {paddingBottom > 0 && virtualRows.length > 0 && (
                 <Tr>
                   <Td colSpan={columns.length} height={`${paddingBottom}px`} p={0} />
-                </Tr>
-              )}
-              {rows.length === 0 && !isLoading && (
-                <Tr>
-                  <Td colSpan={columns.length} textAlign="center" py={10}>
-                    <Text fontSize="lg" color="gray.500">
-                      No subjects found
-                    </Text>
-                  </Td>
                 </Tr>
               )}
             </Tbody>

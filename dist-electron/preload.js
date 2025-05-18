@@ -107,6 +107,10 @@ electron.contextBridge.exposeInMainWorld("api", {
       logIpcRequest("group:createGroup", { subjectId, data });
       return electron.ipcRenderer.invoke("group:createGroup", subjectId, data);
     },
+    directCreateGroup: (subjectId, data) => {
+      logIpcRequest("group:directCreateGroup", { subjectId, data });
+      return electron.ipcRenderer.invoke("group:directCreateGroup", subjectId, data);
+    },
     listGroups: (subjectId) => {
       logIpcRequest("group:listGroups", { subjectId });
       return electron.ipcRenderer.invoke("group:listGroups", subjectId);
@@ -152,6 +156,10 @@ electron.contextBridge.exposeInMainWorld("api", {
       logIpcRequest("subject:listSubjects", {});
       return electron.ipcRenderer.invoke("subject:listSubjects");
     },
+    getDirectSubjects: () => {
+      logIpcRequest("subject:getDirectSubjects", {});
+      return electron.ipcRenderer.invoke("subject:getDirectSubjects");
+    },
     getSubjectDetails: (id) => {
       logIpcRequest("subject:getSubjectDetails", { id });
       return electron.ipcRenderer.invoke("subject:getSubjectDetails", id);
@@ -163,6 +171,10 @@ electron.contextBridge.exposeInMainWorld("api", {
     deleteSubject: (id) => {
       logIpcRequest("subject:deleteSubject", { id });
       return electron.ipcRenderer.invoke("subject:deleteSubject", id);
+    },
+    directDeleteSubject: (id) => {
+      logIpcRequest("subject:directDeleteSubject", { id });
+      return electron.ipcRenderer.invoke("subject:directDeleteSubject", id);
     }
   },
   /**
@@ -263,6 +275,18 @@ electron.contextBridge.exposeInMainWorld("api", {
     checkStatus: () => {
       logIpcRequest("db:checkStatus", {});
       return electron.ipcRenderer.invoke("db:checkStatus");
+    },
+    inspectTable: (tableName) => {
+      logIpcRequest("db:inspectTable", { tableName });
+      return electron.ipcRenderer.invoke("db:inspectTable", tableName);
+    },
+    updateSchema: () => {
+      logIpcRequest("db:updateSchema", {});
+      return electron.ipcRenderer.invoke("db:updateSchema");
+    },
+    generateSchemaReport: () => {
+      logIpcRequest("db:generateSchemaReport", {});
+      return electron.ipcRenderer.invoke("db:generateSchemaReport");
     }
   }
 });

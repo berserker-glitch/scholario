@@ -180,6 +180,10 @@ contextBridge.exposeInMainWorld('api', {
       logIpcRequest('subject:listSubjects', {});
       return ipcRenderer.invoke('subject:listSubjects');
     },
+    getDirectSubjects: () => {
+      logIpcRequest('subject:getDirectSubjects', {});
+      return ipcRenderer.invoke('subject:getDirectSubjects');
+    },
     getSubjectDetails: (id: string) => {
       logIpcRequest('subject:getSubjectDetails', { id });
       return ipcRenderer.invoke('subject:getSubjectDetails', id);

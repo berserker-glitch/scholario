@@ -127,9 +127,37 @@ export const SubjectService = {
         ipcLogger.info({ count: subjectList.length }, 'Subjects retrieved successfully')
       )),
       Effect.catchAll((error) => {
-        ipcLogger.error({ err: error }, 'Failed to list subjects, returning empty array');
-        // Return empty array instead of failing to prevent UI errors
-        return Effect.succeed([]);
+        ipcLogger.error({ err: error }, 'Failed to list subjects, trying direct database query');
+        
+        // Fallback to direct database query if the getSubjectsWithStats fails
+        return pipe(
+          Effect.try({
+            try: async () => {
+              // Direct query to get subjects without stats
+              const rawSubjects = await db.select().from(subjects).all();
+              
+              ipcLogger.info({ 
+                count: rawSubjects.length, 
+                subjects: rawSubjects.map(s => ({ id: s.id, title: s.title }))
+              }, 'Retrieved subjects with direct query fallback');
+              
+              // Add default stats
+              return rawSubjects.map(subject => ({
+                ...subject,
+                groupCount: 0,
+                studentCount: 0
+              }));
+            },
+            catch: (err) => {
+              ipcLogger.error({ err }, 'Even direct query failed, returning empty array');
+              return [];
+            }
+          }),
+          Effect.catchAll((finalError) => {
+            ipcLogger.error({ err: finalError }, 'All attempts to get subjects failed, returning empty array');
+            return Effect.succeed([]);
+          })
+        );
       })
     );
   },

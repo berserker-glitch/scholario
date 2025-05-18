@@ -14,6 +14,8 @@ The development focus is currently on stabilizing the application by fixing crit
    - Updated student table columns to show CNI, School, and Study Year instead of Status, Email, and Actions
 
 2. **Critical Fixes**:
+   - Fixed subject page rendering issue that prevented subjects from displaying (ReferenceError: Cannot access 'filteredSubjects' before initialization)
+   - Created direct database access API as emergency fallback for subjects data retrieval
    - Fixed student update functionality that wasn't saving changes to the database
    - Fixed student creation functionality that was not working when clicking save button
    - Resolved Chakra UI component errors by properly nesting StatNumber within Stat components

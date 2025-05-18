@@ -41,9 +41,16 @@ UI components follow a hierarchical structure:
 - Detail components (StudentDetailDrawer) show detailed information
 - Common components are shared across different sections
 
+**Important React Component Patterns:**
+- Variable declarations must appear before they are used in hooks or JSX
+- Place derived state (like filtered lists) before the useEffects that reference them
+- Debug logging should be careful not to reference variables before they're defined
+- Keep state definitions at the top of the component for clarity
+
 ### Fallback Mechanisms
 The application implements several fallback mechanisms for robustness:
 - Multi-path module loading for native dependencies
+- Direct database access APIs for emergency data retrieval when standard services fail
 - In-memory SQLite as backup if file-based DB fails
 - Mock data implementation when database is inaccessible
 - Error boundaries to catch rendering exceptions

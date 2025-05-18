@@ -22,6 +22,8 @@
 - Props interface defined above component
 - JSDoc comments above component definitions
 - Local state with useState, complex state with React Query
+- Variable declarations must appear before use in hooks or JSX
+- Place derived state (like filtered lists) before the useEffects that reference them
 
 ### Database Operations
 - Repository pattern for data access
@@ -30,6 +32,7 @@
 - Avoid using `override` keyword in repository classes as it causes method reference issues
 - Always include an `updatedAt` timestamp in update operations
 - Implement specific error handling within repository methods
+- When standard services fail, provide direct database access APIs as emergency fallbacks
 
 ### Error Handling Patterns
 - Services return Either<Error, T> from Effect.ts

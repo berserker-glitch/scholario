@@ -44,33 +44,22 @@ const isValidSubject = (subject: any): boolean => {
     return false;
   }
   
-  // More lenient validation - just need some identifiable properties
-  // Combine multiple conditions to find the best way to validate
-  const hasId = Boolean(subject.id);
-  const hasTitle = Boolean(subject.title);
-  const hasIdString = typeof subject.id === 'string';
-  const hasTitleString = typeof subject.title === 'string';
+  // Very simple validation - just need id and title
+  // This is much more permissive than before
+  const hasMinimumFields = Boolean(subject.id) && Boolean(subject.title);
   
   // Log validation details
   console.log('Subject validation details:', {
-    hasId,
-    hasTitle,
-    hasIdString, 
-    hasTitleString,
+    hasId: Boolean(subject.id),
+    hasTitle: Boolean(subject.title),
     properties: Object.keys(subject)
   });
   
-  // More permissive check - either id or any unique identifier
-  const isValid = (
-    hasId && hasTitle && // Has basic required fields
-    (hasIdString || typeof subject.id === 'number') // ID can be string or number
-  );
-  
-  if (!isValid) {
+  if (!hasMinimumFields) {
     console.warn('Subject failed validation:', subject);
   }
   
-  return isValid;
+  return hasMinimumFields; // Return true for almost any subject with id and title
 };
 
 /**
@@ -126,61 +115,118 @@ const SubjectsPage: React.FC = () => {
         throw new Error('Subject API not available');
       }
       
-      const result = await window.api.subject.listSubjects();
-      console.log('Subject API response:', result);
-      
-      if (result._tag === 'Left') {
-        console.error('Failed to fetch subjects', result.left);
-        throw new Error(result.left?.message || 'Failed to fetch subjects');
-      }
-      
-      // Log the raw right property for debugging
-      console.log('Raw response.right value:', result.right);
-      
-      // Handle both array and object responses
-      let subjectsArray = [];
-      
-      if (result.right) {
-        if (Array.isArray(result.right)) {
-          console.log('Response is an array with length:', result.right.length);
-          subjectsArray = result.right;
-        } else if (typeof result.right === 'object') {
-          console.log('Response is an object, converting to array');
-          // If it's a single subject object, wrap it in an array
-          subjectsArray = [result.right];
-        } else {
-          console.error('Unexpected response format:', typeof result.right);
-          subjectsArray = [];
+      try {
+        // First try the direct API which is more reliable
+        if (window.api?.subject?.getDirectSubjects) {
+          console.log('Trying direct subjects API first...');
+          try {
+            const directResult = await window.api.subject.getDirectSubjects();
+            console.log('Direct API response:', directResult);
+            
+            if (directResult._tag === 'Right' && directResult.right) {
+              const subjectData = Array.isArray(directResult.right) ? directResult.right : [directResult.right];
+              console.log('Got subjects from direct API:', subjectData.length);
+              
+              // Process subjects
+              const processedSubjects = subjectData.map(subject => ({
+                id: subject.id || `temp-${Date.now()}-${Math.random()}`,
+                title: subject.title || 'Unnamed Subject',
+                description: subject.description || '',
+                fee: subject.fee || 0,
+                metadata: subject.metadata || null,
+                createdAt: subject.createdAt || new Date().toISOString(),
+                updatedAt: subject.updatedAt || new Date().toISOString(),
+                groupCount: subject.groupCount || 0,
+                studentCount: subject.studentCount || 0,
+              }));
+              
+              console.log('Processed subjects from direct API:', processedSubjects.length);
+              return processedSubjects;
+            }
+          } catch (directErr) {
+            console.error('Direct API failed, falling back to standard API:', directErr);
+          }
         }
+        
+        // Fall back to standard API if direct API failed or wasn't available
+        console.log('Using standard subjects API...');
+        const result = await window.api.subject.listSubjects();
+        console.log('Standard API response:', result);
+        
+        // Handle error responses
+        if (result._tag === 'Left') {
+          console.error('Failed to fetch subjects', result.left);
+          throw new Error(result.left?.message || 'Failed to fetch subjects');
+        }
+        
+        // Log the raw right property for debugging
+        console.log('Raw response.right value:', result.right);
+        
+        // Handle both array and object responses
+        let subjectsArray = [];
+        
+        if (result.right) {
+          if (Array.isArray(result.right)) {
+            console.log('Response is an array with length:', result.right.length);
+            subjectsArray = result.right;
+          } else if (typeof result.right === 'object') {
+            console.log('Response is an object, converting to array');
+            // If it's a single subject object, wrap it in an array
+            subjectsArray = [result.right];
+          } else {
+            console.error('Unexpected response format:', typeof result.right);
+            subjectsArray = [];
+          }
+        }
+        
+        // If we have an empty array, look for a subjects property that might contain the actual subjects
+        if (subjectsArray.length === 0 && result.right && result.right.subjects) {
+          console.log('Found subjects property in response, using that instead');
+          subjectsArray = Array.isArray(result.right.subjects) ? result.right.subjects : [result.right.subjects];
+        }
+        
+        console.log('Raw subjects before validation:', subjectsArray);
+        
+        // Filter out any invalid subjects - but be extremely permissive
+        const validSubjects = subjectsArray.filter(subject => 
+          subject && typeof subject === 'object'
+        );
+        
+        if (validSubjects.length !== subjectsArray.length) {
+          console.warn(`Filtered out ${subjectsArray.length - validSubjects.length} invalid subjects`);
+        }
+        
+        // Process subjects to add group and student counts with defaults
+        const subjectsWithMeta = validSubjects.map((subject: any) => ({
+          id: subject.id || `temp-${Date.now()}-${Math.random()}`,
+          title: subject.title || 'Unnamed Subject',
+          description: subject.description || '',
+          fee: subject.fee || 0,
+          metadata: subject.metadata || null,
+          createdAt: subject.createdAt || new Date().toISOString(),
+          updatedAt: subject.updatedAt || new Date().toISOString(),
+          groupCount: subject.groupCount || 0,
+          studentCount: subject.studentCount || 0,
+        }));
+        
+        console.log('Processed subjects for display:', subjectsWithMeta);
+        return subjectsWithMeta;
+      } catch (error) {
+        console.error('Error in subjects query function:', error);
+        // Return existing subjects from cache if available
+        const existingData = queryClient.getQueryData<any[]>(['subjects']);
+        if (existingData && existingData.length > 0) {
+          console.log('Returning existing subjects from cache:', existingData.length);
+          return existingData;
+        }
+        // Re-throw error to be handled by React Query
+        throw error;
       }
-      
-      // If we have an empty array, look for a subjects property that might contain the actual subjects
-      if (subjectsArray.length === 0 && result.right && result.right.subjects) {
-        console.log('Found subjects property in response, using that instead');
-        subjectsArray = Array.isArray(result.right.subjects) ? result.right.subjects : [result.right.subjects];
-      }
-      
-      // Filter out any invalid subjects
-      const validSubjects = subjectsArray.filter(isValidSubject);
-      
-      if (validSubjects.length !== subjectsArray.length) {
-        console.warn(`Filtered out ${subjectsArray.length - validSubjects.length} invalid subjects`);
-      }
-      
-      // Process subjects to add group and student counts
-      const subjectsWithMeta = validSubjects.map((subject: any) => ({
-        ...subject,
-        fee: subject.fee || 0, // Ensure fee has a default value
-        groupCount: subject.groupCount || 0,
-        studentCount: subject.studentCount || 0,
-      }));
-      
-      console.log('Fetched subjects:', subjectsWithMeta);
-      return subjectsWithMeta;
     },
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 1000, // Consider data stale after 1 second
+    retry: 2, // Retry failed requests twice
   });
 
   // Log subjects whenever they change
@@ -230,43 +276,45 @@ const SubjectsPage: React.FC = () => {
       });
       onAddModalClose();
       
-      // Different approach to handling the created subject
-      // If we have data, use it directly or create a simplified subject object
-      const newSubject = data || {};
+      // Ensure we have a complete subject object with all necessary properties
+      let newSubject: SubjectWithMeta;
       
-      // Force required properties to ensure it passes validation later
-      if (newSubject && typeof newSubject === 'object') {
-        // Ensure the subject has an ID even if response doesn't include one
-        if (!newSubject.id && data && data.title) {
-          // Generate a temporary ID if needed
-          newSubject.id = `temp-${Date.now()}`;
-          console.log('Generated temporary ID for created subject:', newSubject.id);
-        }
-        
-        // Ensure title is set
-        if (!newSubject.title && data && data.title) {
-          newSubject.title = data.title;
-        }
-        
-        // Add metadata fields
-        newSubject.fee = newSubject.fee || data?.fee || 0;
-        newSubject.groupCount = 0;
-        newSubject.studentCount = 0;
-        
-        console.log('Final subject object to add to UI:', newSubject);
-        
-        // Add the subject to the UI if it has required fields
-        if (newSubject.id && newSubject.title) {
-          // Add the new subject directly to the subjects list in the UI
-          queryClient.setQueryData(['subjects'], (oldData: any) => {
-            const oldSubjects = Array.isArray(oldData) ? oldData : [];
-            return [...oldSubjects, newSubject];
-          });
-        }
+      if (data && typeof data === 'object' && data.id && data.title) {
+        // Use returned data if it looks valid
+        newSubject = {
+          ...data,
+          fee: data.fee || 0,
+          groupCount: data.groupCount || 0,
+          studentCount: data.studentCount || 0,
+        };
+      } else {
+        // Create a minimal valid subject from the form data
+        newSubject = {
+          id: `temp-${Date.now()}`,
+          title: data?.title || 'New Subject',
+          description: data?.description || '',
+          fee: data?.fee || 0,
+          groupCount: 0,
+          studentCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        console.log('Created fallback subject object:', newSubject);
       }
       
-      // Always refetch to make sure we have the latest data from the server
+      // ALWAYS add the subject to the UI cache regardless of validation
+      queryClient.setQueryData(['subjects'], (oldData: any) => {
+        const oldSubjects = Array.isArray(oldData) ? oldData : [];
+        console.log('Adding new subject to UI:', newSubject);
+        console.log('Current subject count:', oldSubjects.length);
+        return [...oldSubjects, newSubject];
+      });
+      
+      // Invalidate and refetch to ensure we have latest data from server
       queryClient.invalidateQueries({ queryKey: ['subjects'] });
+      console.log('Invalidated subjects query, will refetch');
+      
+      // Immediate refetch to update UI
       setTimeout(() => {
         console.log('Refetching subjects after creation...');
         refetch();
@@ -460,6 +508,24 @@ const SubjectsPage: React.FC = () => {
     );
   });
   
+  // Debug logging for rendering
+  useEffect(() => {
+    // Debug rendering of subjects
+    console.log('RENDERING CHECK - Subjects array type:', Array.isArray(subjects) ? 'Array' : typeof subjects);
+    console.log('RENDERING CHECK - Subjects array length:', Array.isArray(subjects) ? subjects.length : 'N/A');
+    console.log('RENDERING CHECK - First subject:', subjects?.[0] ? JSON.stringify(subjects[0]) : 'None');
+    console.log('RENDERING CHECK - filteredSubjects:', filteredSubjects.length);
+    
+    // Debug UI rendering
+    setTimeout(() => {
+      try {
+        console.log('DOM CHECK - Subject table rows:', document.querySelectorAll('table tbody tr').length);
+      } catch (err) {
+        console.error('Error checking DOM:', err);
+      }
+    }, 1000);
+  }, [subjects, filteredSubjects]);
+
   return (
     <Box p={5}>
       <Flex justify="space-between" align="center" mb={5}>

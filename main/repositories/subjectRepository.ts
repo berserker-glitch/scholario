@@ -171,38 +171,68 @@ export class SubjectRepository extends BaseRepository<Subject> {
           // Get all subjects
           const allSubjects = await db.select().from(subjects).all();
           
+          // DEBUG: Log all found subjects to inspect what's coming from the database
+          console.log('DEBUG - Raw subjects from database:', JSON.stringify(allSubjects, null, 2));
+          logger.info({ count: allSubjects?.length || 0, rawSubjects: allSubjects }, 'Raw subjects from database');
+          
           // If no subjects found, return empty array
           if (!allSubjects || allSubjects.length === 0) {
             logger.info('No subjects found, returning empty array');
             return [];
           }
           
-          // For each subject, get group count and student count
+          // For each subject, add stats with safe defaults
           const subjectsWithStats = await Promise.all(allSubjects.map(async subject => {
-            // Count groups
-            const groupCount = await db.select({ count: db.fn.count() })
-              .from(groups)
-              .where(eq(groups.subjectId, subject.id))
-              .then(result => Number(result[0]?.count || 0));
-            
-            // Count students enrolled in any group of this subject
-            const studentCount = await db.select({ count: db.fn.count() })
-              .from(enrollments)
-              .innerJoin(groups, eq(enrollments.groupId, groups.id))
-              .innerJoin(students, eq(enrollments.studentId, students.id))
-              .where(
-                and(
-                  eq(groups.subjectId, subject.id),
-                  eq(students.isKicked, false)
-                )
-              )
-              .then(result => Number(result[0]?.count || 0));
-            
-            return {
-              ...subject,
-              groupCount,
-              studentCount
-            };
+            try {
+              // Count groups - with additional null/undefined checks
+              let groupCount = 0;
+              try {
+                const groupResult = await db.select({ count: db.fn.count() })
+                  .from(groups)
+                  .where(eq(groups.subjectId, subject.id))
+                  .all();
+                
+                // Safely extract count with fallback to 0
+                groupCount = Number(groupResult?.[0]?.count || 0);
+              } catch (err) {
+                logger.warn({ subject: subject.id, err }, 'Failed to get group count');
+              }
+              
+              // Count students - with additional null/undefined checks
+              let studentCount = 0;
+              try {
+                const studentResult = await db.select({ count: db.fn.count() })
+                  .from(enrollments)
+                  .innerJoin(groups, eq(enrollments.groupId, groups.id))
+                  .innerJoin(students, eq(enrollments.studentId, students.id))
+                  .where(
+                    and(
+                      eq(groups.subjectId, subject.id),
+                      eq(students.isKicked, false)
+                    )
+                  )
+                  .all();
+                
+                // Safely extract count with fallback to 0
+                studentCount = Number(studentResult?.[0]?.count || 0);
+              } catch (err) {
+                logger.warn({ subject: subject.id, err }, 'Failed to get student count');
+              }
+              
+              return {
+                ...subject,
+                groupCount,
+                studentCount
+              };
+            } catch (subjectError) {
+              // If statistics calculation fails for a subject, return the subject with default stats
+              logger.warn({ subject: subject.id, err: subjectError }, 'Failed to get stats for subject');
+              return {
+                ...subject,
+                groupCount: 0,
+                studentCount: 0
+              };
+            }
           }));
           
           logger.info({ count: subjectsWithStats.length }, 'Subjects with stats retrieved successfully');

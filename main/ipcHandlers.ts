@@ -245,6 +245,42 @@ export function registerIpcHandlers(): void {
     return result;
   });
   
+  // SPECIAL DIRECT API for subjects - emergency workaround
+  ipcMain.handle('subject:getDirectSubjects', async () => {
+    logIpcRequest('subject:getDirectSubjects', {});
+    try {
+      const { db } = await import('../db');
+      const { subjects } = await import('../db/schema');
+      
+      // Direct database query
+      const allSubjects = await db.select().from(subjects).all();
+      
+      console.log(`Direct subjects query found ${allSubjects.length} subjects`);
+      console.log('First subject:', allSubjects.length > 0 ? JSON.stringify(allSubjects[0]) : 'none');
+      
+      // Process subjects to have consistent format
+      const processedSubjects = allSubjects.map(subject => ({
+        id: subject.id,
+        title: subject.title,
+        description: subject.description || '',
+        fee: subject.fee || 0,
+        metadata: subject.metadata,
+        createdAt: subject.createdAt,
+        updatedAt: subject.updatedAt,
+        groupCount: 0,
+        studentCount: 0
+      }));
+      
+      // Return as Right value
+      const result = { _tag: 'Right', right: processedSubjects };
+      logIpcResponse('subject:getDirectSubjects', result);
+      return result;
+    } catch (error) {
+      console.error('Direct subjects query failed:', error);
+      return { _tag: 'Left', left: { message: 'Failed to get subjects directly' } };
+    }
+  });
+  
   ipcMain.handle('subject:getSubjectDetails', async (_, id) => {
     logIpcRequest('subject:getSubjectDetails', { id });
     const result = await effectToEither(SubjectService.getSubjectDetails(id));
