@@ -62,49 +62,43 @@ const DashboardContent: React.FC = () => {
   });
   
   // Fetch subject statistics using React Query
-  const { data: subjectStats = { total: 0, groups: 0, avgStudentsPerGroup: 0 } } = useQuery({
+  const { data: subjectStats = { total: 0 } } = useQuery({
     queryKey: ['subjectStats'],
     queryFn: async () => {
       try {
-        if (window.api?.subject?.listSubjects) {
-          // Fetch subjects
-          const subjectsResult = await window.api.subject.listSubjects();
-          if (subjectsResult._tag !== 'Right') {
-            throw new Error('Failed to fetch subjects');
+        let subjectsTotal = 0;
+        
+        // First try direct API for most reliable subjects data
+        if (window.api?.subject?.getDirectSubjects) {
+          const directResult = await window.api.subject.getDirectSubjects();
+          if (directResult._tag === 'Right') {
+            const subjects = directResult.right || [];
+            subjectsTotal = subjects.length;
+            console.log('Direct API subjects count:', subjectsTotal);
+            return { total: subjectsTotal };
           }
-          
-          const subjects = subjectsResult.right || [];
-          const total = subjects.length;
-          
-          // Fetch groups
-          let groups = [];
-          if (window.api?.group?.listAllGroups) {
-            const groupsResult = await window.api.group.listAllGroups();
-            if (groupsResult._tag === 'Right') {
-              groups = groupsResult.right || [];
-            }
-          }
-          
-          // Calculate stats
-          const groupCount = groups.length;
-          const avgStudentsPerGroup = groupCount > 0 ? Math.round(studentStats.active / groupCount) : 0;
-          
-          return {
-            total,
-            groups: groupCount,
-            avgStudentsPerGroup
-          };
         }
         
-        console.error('Subject API not available');
-        return { total: 0, groups: 0, avgStudentsPerGroup: 0 };
+        // Fall back to standard API if direct access fails
+        if (window.api?.subject?.listSubjects) {
+          const subjectsResult = await window.api.subject.listSubjects();
+          if (subjectsResult._tag === 'Right') {
+            const subjects = subjectsResult.right || [];
+            subjectsTotal = subjects.length;
+            console.log('Standard API subjects count:', subjectsTotal);
+            return { total: subjectsTotal };
+          }
+        }
+        
+        return { total: 0 };
       } catch (error) {
         console.error('Failed to fetch subject stats', error);
-        return { total: 0, groups: 0, avgStudentsPerGroup: 0 };
+        return { total: 0 };
       }
     },
-    refetchInterval: 60000,
-    refetchOnWindowFocus: true
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true
   });
   
   // Fetch payment statistics using React Query
@@ -169,14 +163,6 @@ const DashboardContent: React.FC = () => {
                   <StatLabel fontSize="lg" fontWeight="medium">Subjects</StatLabel>
                   <StatNumber fontSize="3xl">{subjectStats.total}</StatNumber>
                 </Stat>
-                <Flex mt={2}>
-                  <Stat>
-                    <Flex align="center">
-                      <Icon as={FiGrid} color="purple.500" mr={1} />
-                      <StatHelpText mb={0}>{subjectStats.groups} Groups</StatHelpText>
-                    </Flex>
-                  </Stat>
-                </Flex>
               </Box>
               <Flex 
                 width="60px" 
