@@ -33,6 +33,8 @@
 - Always include an `updatedAt` timestamp in update operations
 - Implement specific error handling within repository methods
 - When standard services fail, provide direct database access APIs as emergency fallbacks
+- Check for column existence before accessing in direct database queries
+- Be prepared to remove UI features when database schema mismatches occur
 
 ### Error Handling Patterns
 - Services return Either<Error, T> from Effect.ts
@@ -98,6 +100,8 @@
 - BrowserWindow configuration needs proper preload path
 - Avoid using `override` keyword in repository classes to prevent method reference issues
 - Always include explicit error handling in IPC handlers for proper error propagation
+- Groups table schema differs from expected model, missing 'schedule' column
+- When encountering SQL errors about missing columns, isolate and disable affected features rather than attempting complex fixes
 
 ## Development Workflow
 

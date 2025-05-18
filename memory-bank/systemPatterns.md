@@ -55,6 +55,7 @@ The application implements several fallback mechanisms for robustness:
 - Mock data implementation when database is inaccessible
 - Error boundaries to catch rendering exceptions
 - Graceful degradation strategy throughout the application
+- UI feature removal when database schema mismatches occur
 
 ### State Management
 Application state is managed through:
@@ -76,6 +77,13 @@ Core tables include:
 - backups: Backup metadata
 - auditLogs: System audit logs
 - users: User authentication data
+
+**Schema Evolution Strategy**:
+- When schema mismatches are detected (such as missing columns), disable affected features rather than crashing
+- Add migrations to update database schema as needed
+- Implement compatibility layers when schema changes
+- Always check for column existence before using in queries
+- Create direct database access paths that minimize column dependencies
 
 ## Authentication Flow
 

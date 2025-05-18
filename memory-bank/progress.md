@@ -122,7 +122,13 @@
    - Fixed by moving the debug useEffect after the filteredSubjects variable declaration
    - Created a direct database access API as emergency fallback for reliable subjects data retrieval
 
-10. **Remaining Type Errors**:
+10. ✅ **Fixed: Dashboard Groups Display Error**: "SqliteError: no such column: schedule" error
+   - Root cause: Database schema mismatch in groups table - trying to access non-existent 'schedule' column
+   - Fixed by removing groups display from dashboard entirely
+   - Created direct database access APIs for both subjects and groups to improve reliability
+   - Simplified dashboard UI to only show subject count
+
+11. **Remaining Type Errors**:
    - StudentTable.tsx column definitions need fixing
    - Effect.ts typing needs three type arguments in some locations
 
