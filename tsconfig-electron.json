@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@app/*": ["./app/*"],
+      "@main/*": ["./main/*"],
+      "@db/*": ["./db/*"],
+      "@services/*": ["./services/*"]
+    }
+  },
+  "include": [
+    "main/**/*.ts",
+    "db/**/*.ts",
+    "services/**/*.ts"
+  ]
+} 

@@ -1,0 +1,115 @@
+# Scholario Project Intelligence
+
+## Project Structure Patterns
+
+- React components are organized by feature area (e.g., `students/`, `common/`)
+- Types are defined in `src/types/` with feature-specific files
+- Database schema is centralized in `db/schema.ts`
+- Services follow a layered approach: repositories → services → UI
+- Electron main process code in `main/` directory
+- Renderer process code in `app/` and `src/` directories
+
+## Coding Patterns
+
+### TypeScript
+- Types for all component props and state
+- Interfaces for data models
+- Use of union types for status and actions
+- Optional fields marked with `?` and include `null` in the type (e.g. `phone?: string | null`)
+
+### React Components
+- Functional components with React hooks
+- Props interface defined above component
+- JSDoc comments above component definitions
+- Local state with useState, complex state with React Query
+
+### Database Operations
+- Repository pattern for data access
+- Effect.ts for functional error handling
+- Drizzle ORM for database operations
+- Avoid using `override` keyword in repository classes as it causes method reference issues
+- Always include an `updatedAt` timestamp in update operations
+- Implement specific error handling within repository methods
+
+### Error Handling Patterns
+- Services return Either<Error, T> from Effect.ts
+- Effect.ts requires three type arguments in some places
+- Hooks use try/catch for API calls with fallback to mock data
+- Toast notifications provide user feedback
+- Error boundaries wrap complex component trees
+- Mock data implementation when database is unavailable
+
+## UI Conventions
+
+### Forms
+- Field validation with inline error messages
+- Required fields clearly marked
+- Logical grouping of related fields
+- Cancel/Save buttons consistently placed
+
+### Tables
+- Virtualized for performance
+- Sortable columns
+- Row selection capabilities
+- Student table columns: Name, Phone, Study Year, School, CNI
+
+### Modals & Drawers
+- Modals for creation/editing
+- Drawers for detailed information
+- Consistent header/footer patterns
+- Close button in top-right corner
+
+### Navigation
+- Sidebar navigation component with icons
+- Dashboard as the landing page with statistics cards
+- Consistent routing patterns throughout the application
+
+## Error Handling
+
+- Toast notifications for success/error messages
+- Typed error objects from services
+- Try/catch blocks in async operations
+- Fallback UI for error states
+- Comprehensive error logging with context
+- Mock data implementation when API fails
+- Multiple fallback paths for native module loading
+
+## User Preferences
+
+- Clean, organized UI with proper navigation
+- Dashboard with key metrics for quick overview
+- Emphasis on performance with large datasets
+- Offline functionality as primary concern
+- Robustness and error recovery are critical
+
+## Known Gotchas
+
+- Window API needs type definitions
+- Effect.ts requires three type arguments
+- Virtualized tables need sizing definitions
+- Form validation requires handling for optional fields
+- Student table columns need fixing after model changes
+- Login page must force refresh after auth to ensure proper state updates
+- SQLite native module requires special loading logic
+- Preload script must be CommonJS format
+- BrowserWindow configuration needs proper preload path
+- Avoid using `override` keyword in repository classes to prevent method reference issues
+- Always include explicit error handling in IPC handlers for proper error propagation
+
+## Development Workflow
+
+- Make schema changes first, then update types
+- Update services and repositories next
+- UI components updated last
+- Always fix type errors before committing
+- Test database connection fallbacks thoroughly
+
+## Naming Conventions
+
+- `handle*` for event handlers
+- `on*` for callback props
+- `is*` for boolean states
+- `*Service` for service classes
+- `*Repository` for repositories
+- Component files match component name
+- Interfaces use PascalCase with descriptive names 

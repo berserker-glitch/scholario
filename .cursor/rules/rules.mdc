@@ -1,0 +1,62 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+<!--context7-->
+
+# 🛠️ FIX THIS PROBLEM – Execution Rules for Cursor Agent
+
+When I say **“FIX THIS PROBLEM”**, follow these strict rules to resolve it *correctly and professionally*:
+
+## 1. ✅ Understand First, Then Fix
+- **Do not jump into coding blindly.**
+- Identify and summarize the **root cause** of the issue in **one sentence**, before providing a solution.
+- If unsure what the problem is, **ask for clarification** — don’t hallucinate or assume.
+
+## 2. 🧠 Use the Stack Wisely
+Follow the active tech stack and architecture:
+- **Electron 28 + Vite 5**
+- **React 18 + TypeScript 5 + Chakra UI**
+- **Drizzle ORM with SQLite3 (ULID keys)**
+- **Effect-TS** for logic (`@effect/io`, `@effect/schema`, etc.)
+- **TanStack Table + Virtual**, **React Query**, **Framer Motion**, **DND-Kit**
+
+Use idiomatic solutions that fit these technologies and patterns.
+
+## 3. ✍️ Give a Minimal Working Fix
+- Give the **exact** code that needs to be added or changed.
+- Fix **only what’s broken** – don’t refactor unrelated parts unless I ask.
+- Show the **before vs. after** if it helps clarify.
+- Output a **clean code block** without extra explanations.
+
+## 4. 🧪 Assume I’ll Test It Immediately
+- Your fix should be **ready to paste and run** — no syntax errors, no missing imports.
+- If there are missing types or definitions, provide them clearly.
+- **Avoid theoretical suggestions. Be concrete.**
+
+## 5. 🛡️ No Guessing
+- Don’t generate placeholder functions or fake data.
+- Don’t wrap things in “maybe this works”. If it’s uncertain, say what’s missing and how to solve it properly.
+
+## 6. 🧩 If the Fix Involves State/Data/UI
+- Ensure compatibility with my **Component Structure and Data Flow**.
+- If dealing with forms, modals, or tables — **respect Chakra UI and TanStack** usage conventions.
+- If IPC or database: match the **existing patterns (e.g., studentRepository.ts)**.
+
+## 7. ⚠️ If You Break Something, Apologize and Fix It
+- If your previous fix caused an error or broke something, admit it and fix it **without delay or excuses**.
+
+---
+
+### 🔁 Always Follow Context7 MCP
+This means:
+- Treat every fix as part of a **context-aware development process**
+- Keep reasoning compact, decisions logical, and behavior **consistent with previous context**.
+
+---
+
+Use this as your strict protocol every time I say:  
+> 🔧 **FIX THIS PROBLEM**
+
+
