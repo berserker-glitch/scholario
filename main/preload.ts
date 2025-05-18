@@ -142,6 +142,10 @@ contextBridge.exposeInMainWorld('api', {
       logIpcRequest('group:listAllGroups', {});
       return ipcRenderer.invoke('group:listAllGroups');
     },
+    getDirectGroups: () => {
+      logIpcRequest('group:getDirectGroups', {});
+      return ipcRenderer.invoke('group:getDirectGroups');
+    },
     getGroup: (id: string) => {
       logIpcRequest('group:getGroup', { id });
       return ipcRenderer.invoke('group:getGroup', id);

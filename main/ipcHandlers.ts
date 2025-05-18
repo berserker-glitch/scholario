@@ -170,6 +170,40 @@ export function registerIpcHandlers(): void {
     return result;
   });
   
+  // SPECIAL DIRECT API for groups - emergency workaround
+  ipcMain.handle('group:getDirectGroups', async () => {
+    logIpcRequest('group:getDirectGroups', {});
+    try {
+      const { db } = await import('../db');
+      const { groups } = await import('../db/schema');
+      
+      // Direct database query
+      const allGroups = await db.select().from(groups).all();
+      
+      console.log(`Direct groups query found ${allGroups.length} groups`);
+      console.log('First group:', allGroups.length > 0 ? JSON.stringify(allGroups[0]) : 'none');
+      
+      // Process groups to have consistent format
+      const processedGroups = allGroups.map(group => ({
+        id: group.id,
+        name: group.name,
+        description: group.description || '',
+        subjectId: group.subjectId,
+        metadata: group.metadata,
+        createdAt: group.createdAt,
+        updatedAt: group.updatedAt
+      }));
+      
+      // Return as Right value
+      const result = { _tag: 'Right', right: processedGroups };
+      logIpcResponse('group:getDirectGroups', result);
+      return result;
+    } catch (error) {
+      console.error('Direct groups query failed:', error);
+      return { _tag: 'Left', left: { message: 'Failed to get groups directly' } };
+    }
+  });
+  
   ipcMain.handle('group:getGroup', async (_, id) => {
     logIpcRequest('group:getGroup', { id });
     const result = await effectToEither(GroupService.getGroup(id));
